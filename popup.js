@@ -116,21 +116,76 @@ document.addEventListener('DOMContentLoaded', function() {
                     const info = document.createElement('span');
                     info.textContent = infoText.join(' - ');
                     
+                    const buttonGroup = document.createElement('div');
+                    buttonGroup.className = 'button-group';
+
                     const downloadBtn = document.createElement('button');
                     downloadBtn.textContent = '下载';
                     downloadBtn.className = 'download-btn';
                     downloadBtn.onclick = (e) => {
+                      console.log('下载按钮被点击');
                       e.preventDefault();
                       e.stopPropagation();
-                      const a = document.createElement('a');
-                      a.href = icon.url;
-                      a.download = `icon-${icon.type || 'unknown'}.png`;
-                      a.click();
+                      console.log('准备下载URL:', icon.url);
+                      
+                      // 从 URL 中提取文件名
+                      const urlObj = new URL(icon.url);
+                      const urlFilename = urlObj.pathname.split('/').pop();
+                      
+                      // 确保文件名有正确的扩展名
+                      let filename = urlFilename;
+                      if (!filename.match(/\.(png|jpg|jpeg|ico|svg|gif)$/i)) {
+                        filename += '.png';
+                      }
+                      
+                      // 添加时间戳避免文件名冲突
+                      const timestamp = new Date().getTime();
+                      filename = `icon_${timestamp}_${filename}`;
+                      
+                      console.log('开始下载，文件名:', filename);
+                      
+                      // 发送消息给 background script 处理下载
+                      chrome.runtime.sendMessage({
+                        action: 'downloadIcon',
+                        url: icon.url,
+                        filename: filename
+                      }, (response) => {
+                        if (!response) {
+                          console.error('下载失败: 没有收到响应');
+                          alert('下载失败，请重试');
+                          return;
+                        }
+                        
+                        if (chrome.runtime.lastError) {
+                          console.error('消息发送失败:', chrome.runtime.lastError);
+                          alert('下载失败，请重试');
+                        } else if (!response.success) {
+                          console.error('下载失败:', response.error);
+                          alert(`下载失败: ${response.error}`);
+                        } else {
+                          console.log('下载成功，downloadId:', response.downloadId);
+                        }
+                      });
+                      
+                      // 防止事件冒泡
+                      return false;
                     };
+
+                    const openBtn = document.createElement('button');
+                    openBtn.textContent = '新窗口';
+                    openBtn.className = 'open-btn';
+                    openBtn.onclick = (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      chrome.tabs.create({ url: icon.url });
+                    };
+
+                    buttonGroup.appendChild(downloadBtn);
+                    buttonGroup.appendChild(openBtn);
 
                     container.appendChild(img);
                     container.appendChild(info);
-                    container.appendChild(downloadBtn);
+                    container.appendChild(buttonGroup);
                     return container;
                   })
               )).then(containers => {
@@ -240,4 +295,32 @@ function findHighResIcons() {
   }
 
   return icons;
+}
+
+// 添加 showToast 函数到文件末尾
+function showToast(message) {
+  // 移除现有的 toast
+  const existingToast = document.querySelector('.toast');
+  if (existingToast) {
+    existingToast.remove();
+  }
+  
+  // 创建新的 toast
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  
+  // 触发重排以启动动画
+  setTimeout(() => {
+    toast.classList.add('show');
+  }, 10);
+  
+  // 3秒后隐藏并移除
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => {
+      toast.remove();
+    }, 300);
+  }, 3000);
 }
