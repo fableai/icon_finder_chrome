@@ -16,6 +16,7 @@ A comprehensive guide for Chrome extension development, based on real project ex
 - [Debugging 调试技巧](#debugging-调试技巧)
 - [Internationalization 国际化](#internationalization-国际化)
 - [代码混淆指南](#代码混淆指南)
+- [Version Control 版本控制](#version-control-版本控制)
 
 ## Project Structure 项目结构
 
@@ -346,6 +347,59 @@ document.querySelectorAll('[data-i18n]').forEach(element => {
 1. 清理并创建 build 目录
 2. 复制必要的静态文件
 3. 使用 terser 混淆 JS 文件，同时保留 Chrome API 相关的属性名
+
+## Version Control 版本控制
+
+### Git 配置
+
+在使用 Git 进行版本控制时，建议创建 `.gitignore` 文件来排除不需要提交的文件：
+
+```bash
+# Dependencies
+node_modules/           # npm 依赖目录
+
+# Build output
+build/                 # 构建输出目录
+dist/                  # 分发目录
+*.zip                 # 打包文件
+
+# Development files
+.env                  # 环境变量
+.env.local
+.env.*.local
+
+# Editor directories and files
+.idea/                # JetBrains IDE
+.vscode/             # Visual Studio Code
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+.DS_Store            # macOS
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db          # Windows
+Thumbs.db
+
+# npm
+package-lock.json    # npm 包锁定文件
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+```
+
+这个配置可以帮助你：
+1. 排除依赖和构建文件
+2. 避免提交敏感信息
+3. 忽略操作系统和编辑器生成的文件
+4. 保持仓库整洁
+
+建议在项目初始化时就配置好 `.gitignore`，这样可以避免不必要的文件被提交到版本控制系统中。
 
 ## Best Practices 最佳实践
 
