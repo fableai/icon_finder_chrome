@@ -1,0 +1,16 @@
+{
+  "name": "icon_finder_chrome",
+  "version": "1.0.0",
+  "description": "A Chrome extension that helps you easily find and extract icons from any website.",
+  "main": "background.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rm -rf build && mkdir build && cp manifest.json build/ && cp -r images build/ && cp popup.html build/ && npx terser popup.js -c -m reserved=['chrome'] -o build/popup.js && npx terser background.js -c -m reserved=['chrome'] -o build/background.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "terser": "^5.26.0"
+  }
+}

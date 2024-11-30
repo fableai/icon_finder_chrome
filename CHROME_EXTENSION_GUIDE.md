@@ -15,6 +15,7 @@ A comprehensive guide for Chrome extension development, based on real project ex
 - [Development Tools 开发工具](#development-tools-开发工具)
 - [Debugging 调试技巧](#debugging-调试技巧)
 - [Internationalization 国际化](#internationalization-国际化)
+- [代码混淆指南](#代码混淆指南)
 
 ## Project Structure 项目结构
 
@@ -274,6 +275,77 @@ document.querySelectorAll('[data-i18n]').forEach(element => {
   element.textContent = chrome.i18n.getMessage(message);
 });
 ```
+
+## 代码混淆指南
+
+在对 Chrome 扩展进行代码混淆时，需要特别注意以下几点：
+
+### 常见问题
+
+在使用代码混淆工具（如 terser）时，可能会遇到 `Uncaught TypeError: Cannot read properties of undefined` 错误。这通常是因为混淆工具默认会混淆所有变量名和属性名，包括 Chrome API 的调用。
+
+### 解决方案
+
+使用 terser 的 `reserved` 选项来保留 Chrome API 相关的属性名：
+
+```json
+{
+  "scripts": {
+    "build": "npx terser input.js -c -m reserved=['chrome'] -o output.js"
+  }
+}
+```
+
+### 注意事项
+
+1. Chrome API 相关：
+   - 必须保留 `chrome` 对象及其属性
+   - 常用的 API 包括：`chrome.runtime`、`chrome.tabs`、`chrome.storage` 等
+   - 避免混淆 Chrome API 的回调函数名
+
+2. 代码混淆配置：
+   - `-c`: 启用代码压缩
+   - `-m`: 启用代码混淆
+   - `reserved`: 指定不需要混淆的变量名
+   - 可以添加多个保留字：`reserved=['chrome','window','document']`
+
+3. 构建流程：
+   - 先清理旧的构建文件
+   - 复制静态资源（images、html、manifest.json）
+   - 对 JS 文件进行混淆处理
+   - 保持文件结构完整
+
+4. 测试验证：
+   - 每次修改混淆配置后都需要完整测试
+   - 特别注意 Chrome API 的调用是否正常
+   - 检查消息传递、事件监听等功能
+
+5. 调试建议：
+   - 保留开发环境的未混淆版本
+   - 使用 Chrome 开发者工具检查错误
+   - 必要时可以添加 sourcemap 便于调试
+
+6. 安全性：
+   - 混淆可以提高代码的安全性
+   - 但不要在代码中包含敏感信息
+   - 关键的业务逻辑最好放在后端
+
+### 示例构建脚本
+
+完整的构建脚本示例：
+
+```json
+{
+  "scripts": {
+    "build": "rm -rf build && mkdir build && cp manifest.json build/ && cp -r images build/ && cp popup.html build/ && npx terser popup.js -c -m reserved=['chrome'] -o build/popup.js && npx terser background.js -c -m reserved=['chrome'] -o build/background.js"
+  }
+}
+```
+
+这个构建脚本会：
+1. 清理并创建 build 目录
+2. 复制必要的静态文件
+3. 使用 terser 混淆 JS 文件，同时保留 Chrome API 相关的属性名
 
 ## Best Practices 最佳实践
 
