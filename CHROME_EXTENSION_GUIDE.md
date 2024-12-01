@@ -48,22 +48,16 @@ extension/
   "version": "1.0",
   "description": "Extension Description",
   "permissions": [
-    "tabs",
-    "activeTab"
   ],
   "host_permissions": [
-    "<all_urls>"
   ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "images/icon16.png",
-      "48": "images/icon48.png",
       "128": "images/icon128.png"
     }
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
   }
 }
 ```
@@ -123,25 +117,6 @@ try {
 ```
 
 ## Security 安全性
-
-### XSS 防护
-
-```javascript
-// HTML 内容净化
-function sanitizeHTML(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
-// 数据验证
-function validateInput(data) {
-  if (!data || typeof data !== 'object') {
-    throw new Error('Invalid input');
-  }
-  // 添加更多验证规则
-}
-```
 
 ### CSP 配置
 
@@ -223,43 +198,7 @@ log('Debug message');
 ```
 
 ### 开发者工具配置
-
-在 manifest.json 中添加：
-```json
-{
-  "devtools_page": "devtools.html"
-}
-```
-
 ## Internationalization 国际化
-
-### 消息配置
-
-```json
-// _locales/en/messages.json
-{
-  "extensionName": {
-    "message": "Extension Name",
-    "description": "The name of the extension"
-  },
-  "extensionDescription": {
-    "message": "Extension Description",
-    "description": "The description of the extension"
-  }
-}
-
-// _locales/zh/messages.json
-{
-  "extensionName": {
-    "message": "扩展名称",
-    "description": "扩展的名称"
-  },
-  "extensionDescription": {
-    "message": "扩展描述",
-    "description": "扩展的描述"
-  }
-}
-```
 
 ### 使用国际化消息
 
@@ -400,29 +339,6 @@ yarn-error.log*
 4. 保持仓库整洁
 
 建议在项目初始化时就配置好 `.gitignore`，这样可以避免不必要的文件被提交到版本控制系统中。
-
-## Best Practices 最佳实践
-
-1. **版本控制**
-   - 使用语义化版本号
-   - 保持更新日志
-   - 定期更新依赖
-
-2. **错误处理**
-   - 实现全局错误处理
-   - 提供用户友好的错误提示
-   - 记录错误日志
-
-3. **代码组织**
-   - 模块化设计
-   - 使用 ES6+ 特性
-   - 保持代码简洁
-
-4. **测试**
-   - 单元测试
-   - 集成测试
-   - 用户测试
-
 ## Contributing 贡献
 
 欢迎贡献更多最佳实践和经验！
