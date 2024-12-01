@@ -12,6 +12,7 @@ mkdir -p ./build
 # Copy all files to build directory
 cp manifest.json ./build/
 cp popup.html ./build/
+cp background.js ./build/
 cp -r images ./build/
 
 # Minify and obfuscate JavaScript

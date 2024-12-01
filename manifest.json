@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Web Icon Download 网站图标查看-快速下载网站图标",
-  "version": "1.0",
+  "version": "1.1",
   "description": "View icons of current browser tabs 查看下载网站图标 ",
   "permissions": [
     "tabs",

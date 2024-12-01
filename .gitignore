@@ -9,3 +9,6 @@ build/
 
 # npm
 package-lock.json
+
+# Archives
+*.zip
