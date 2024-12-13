@@ -1,0 +1,47 @@
+{
+  "extensionName": {
+    "message": "网站图标查看"
+  },
+  "extensionDescription": {
+    "message": "查看和下载浏览器标签页中的网站图标"
+  },
+  "viewIcon": {
+    "message": "查看图标"
+  },
+  "close": {
+    "message": "关闭"
+  },
+  "loading": {
+    "message": "加载中..."
+  },
+  "giveStars": {
+    "message": "给我们5星好评！"
+  },
+  "moreTools": {
+    "message": "｜更多工具｜"
+  },
+  "twitter": {
+    "message": "Twitter"
+  },
+  "downloadFailed": {
+    "message": "下载失败"
+  },
+  "availableIcons": {
+    "message": "可用图标列表"
+  },
+  "newWindow": {
+    "message": "新窗口"
+  },
+  "download": {
+    "message": "下载"
+  },
+  "downloadFailedRetry": {
+    "message": "下载失败，请重试"
+  },
+  "noIconFound": {
+    "message": "该页面没有图标！"
+  },
+  "loadError": {
+    "message": "加载图标时出现错误"
+  }
+}
