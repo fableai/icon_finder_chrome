@@ -1,26 +1,41 @@
 document.addEventListener('DOMContentLoaded', function() {
+  // Load saved language preference
+  chrome.storage.local.get('preferred_language', function(data) {
+    if (data.preferred_language) {
+      document.getElementById('languageSelect').value = data.preferred_language;
+    }
+  });
+
+  // Handle language selection
+  document.getElementById('languageSelect').addEventListener('change', function(e) {
+    const lang = e.target.value;
+    chrome.storage.local.set({ 'preferred_language': lang }, function() {
+      chrome.runtime.reload();
+    });
+  });
+
   // 获取所有打开的标签页
   chrome.tabs.query({}, function(tabs) {
     const tabList = document.getElementById('tabList');
-    
+
     tabs.forEach(tab => {
       const tabItem = document.createElement('div');
       tabItem.className = 'tab-item';
-      
+
       // 创建图标元素
       const icon = document.createElement('img');
       icon.className = 'tab-icon';
       icon.src = tab.favIconUrl || 'images/default-icon.png';
-      
+
       // 创建标题元素
       const title = document.createElement('span');
       title.className = 'tab-title';
       title.textContent = tab.title;
-      
+
       // 创建查看图标按钮
       const viewButton = document.createElement('button');
       viewButton.className = 'view-icon-btn';
-      viewButton.textContent = '查看图标';
+      viewButton.textContent = chrome.i18n.getMessage('viewIcon');
       viewButton.onclick = function() {
         // 获取当前标签页的图标信息
         chrome.scripting.executeScript({
@@ -32,28 +47,28 @@ document.addEventListener('DOMContentLoaded', function() {
             if (icons.length > 0) {
               const dialog = document.createElement('dialog');
               dialog.className = 'icon-dialog';
-              
+
               const header = document.createElement('div');
               header.className = 'dialog-header';
-              
+
               const title = document.createElement('h3');
-              title.textContent = '可用图标列表';
+              title.textContent = chrome.i18n.getMessage('availableIcons');
               title.style.margin = '3px 0';
-              
+
               const buttonGroup = document.createElement('div');
               buttonGroup.className = 'button-group';
-              
+
               const closeBtn = document.createElement('button');
-              closeBtn.textContent = '关闭';
+              closeBtn.textContent = chrome.i18n.getMessage('close');
               closeBtn.className = 'close-btn';
               closeBtn.onclick = (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 dialog.remove();
               };
-              
+
               buttonGroup.appendChild(closeBtn);
-              
+
               header.appendChild(title);
               header.appendChild(buttonGroup);
               dialog.appendChild(header);
@@ -66,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
               const spinner = document.createElement('div');
               spinner.className = 'spinner';
               const loadingText = document.createElement('p');
-              loadingText.textContent = '加载中...';
+              loadingText.textContent = chrome.i18n.getMessage('loading');
               loadingContainer.appendChild(spinner);
               loadingContainer.appendChild(loadingText);
               content.appendChild(loadingContainer);
@@ -112,38 +127,38 @@ document.addEventListener('DOMContentLoaded', function() {
                     const infoText = [];
                     if (icon.type) infoText.push(icon.type);
                     if (icon.size) infoText.push(`${icon.size}x${icon.size}`);
-                    
+
                     const info = document.createElement('span');
                     info.textContent = infoText.join(' - ');
-                    
+
                     const buttonGroup = document.createElement('div');
                     buttonGroup.className = 'button-group';
 
                     const downloadBtn = document.createElement('button');
-                    downloadBtn.textContent = '下载';
+                    downloadBtn.textContent = chrome.i18n.getMessage('download');
                     downloadBtn.className = 'download-btn';
                     downloadBtn.onclick = (e) => {
                       console.log('下载按钮被点击');
                       e.preventDefault();
                       e.stopPropagation();
                       console.log('准备下载URL:', icon.url);
-                      
+
                       // 从 URL 中提取文件名
                       const urlObj = new URL(icon.url);
                       const urlFilename = urlObj.pathname.split('/').pop();
-                      
+
                       // 确保文件名有正确的扩展名
                       let filename = urlFilename;
                       if (!filename.match(/\.(png|jpg|jpeg|ico|svg|gif)$/i)) {
                         filename += '.png';
                       }
-                      
+
                       // 添加时间戳避免文件名冲突
                       const timestamp = new Date().getTime();
                       filename = `icon_${timestamp}_${filename}`;
-                      
+
                       console.log('开始下载，文件名:', filename);
-                      
+
                       // 发送消息给 background script 处理下载
                       chrome.runtime.sendMessage({
                         action: 'downloadIcon',
@@ -152,27 +167,27 @@ document.addEventListener('DOMContentLoaded', function() {
                       }, (response) => {
                         if (!response) {
                           console.error('下载失败: 没有收到响应');
-                          alert('下载失败，请重试');
+                          alert(chrome.i18n.getMessage('downloadFailedRetry'));
                           return;
                         }
-                        
+
                         if (chrome.runtime.lastError) {
                           console.error('消息发送失败:', chrome.runtime.lastError);
-                          alert('下载失败，请重试');
+                          alert(chrome.i18n.getMessage('downloadFailedRetry'));
                         } else if (!response.success) {
                           console.error('下载失败:', response.error);
-                          alert(`下载失败: ${response.error}`);
+                          alert(chrome.i18n.getMessage('downloadFailed') + ': ' + response.error);
                         } else {
                           console.log('下载成功，downloadId:', response.downloadId);
                         }
                       });
-                      
+
                       // 防止事件冒泡
                       return false;
                     };
 
                     const openBtn = document.createElement('button');
-                    openBtn.textContent = '新窗口';
+                    openBtn.textContent = chrome.i18n.getMessage('newWindow');
                     openBtn.className = 'open-btn';
                     openBtn.onclick = (e) => {
                       e.preventDefault();
@@ -222,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 处理错误情况
                 loadingContainer.remove();
                 const errorMsg = document.createElement('div');
-                errorMsg.textContent = '加载图标时出现错误';
+                errorMsg.textContent = chrome.i18n.getMessage('loadError');
                 errorMsg.style.textAlign = 'center';
                 errorMsg.style.color = '#666';
                 errorMsg.style.padding = '20px';
@@ -234,18 +249,18 @@ document.addEventListener('DOMContentLoaded', function() {
               if (iconUrl) {
                 window.open(iconUrl, '_blank');
               } else {
-                alert('该页面没有图标！');
+                alert(chrome.i18n.getMessage('noIconFound'));
               }
             }
           }
         });
       }
-      
+
       // 将元素添加到tab项中
       tabItem.appendChild(icon);
       tabItem.appendChild(title);
       tabItem.appendChild(viewButton);
-      
+
       // 将tab项添加到列表中
       tabList.appendChild(tabItem);
     });

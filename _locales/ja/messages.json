@@ -1,0 +1,47 @@
+{
+  "extensionName": {
+    "message": "ウェブアイコンダウンロード"
+  },
+  "extensionDescription": {
+    "message": "ブラウザタブからウェブサイトのアイコンを表示・ダウンロード"
+  },
+  "viewIcon": {
+    "message": "アイコンを表示"
+  },
+  "close": {
+    "message": "閉じる"
+  },
+  "loading": {
+    "message": "読み込み中..."
+  },
+  "giveStars": {
+    "message": "5つ星をください！"
+  },
+  "moreTools": {
+    "message": "| その他のツール |"
+  },
+  "twitter": {
+    "message": "Twitter"
+  },
+  "downloadFailed": {
+    "message": "ダウンロード失敗"
+  },
+  "availableIcons": {
+    "message": "利用可能なアイコン"
+  },
+  "newWindow": {
+    "message": "新しいウィンドウ"
+  },
+  "download": {
+    "message": "ダウンロード"
+  },
+  "downloadFailedRetry": {
+    "message": "ダウンロードに失敗しました。もう一度お試しください"
+  },
+  "noIconFound": {
+    "message": "このページにアイコンがありません！"
+  },
+  "loadError": {
+    "message": "アイコンの読み込みエラー"
+  }
+}

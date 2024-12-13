@@ -1,0 +1,47 @@
+{
+  "extensionName": {
+    "message": "Web Icon Download"
+  },
+  "extensionDescription": {
+    "message": "View and download website icons from your browser tabs"
+  },
+  "viewIcon": {
+    "message": "View Icons"
+  },
+  "close": {
+    "message": "Close"
+  },
+  "loading": {
+    "message": "Loading..."
+  },
+  "giveStars": {
+    "message": "Give us 5 stars!"
+  },
+  "moreTools": {
+    "message": "| More Tools |"
+  },
+  "twitter": {
+    "message": "Twitter"
+  },
+  "downloadFailed": {
+    "message": "Download failed"
+  },
+  "availableIcons": {
+    "message": "Available Icons"
+  },
+  "newWindow": {
+    "message": "New Window"
+  },
+  "download": {
+    "message": "Download"
+  },
+  "downloadFailedRetry": {
+    "message": "Download failed, please try again"
+  },
+  "noIconFound": {
+    "message": "No icon found for this page!"
+  },
+  "loadError": {
+    "message": "Error loading icons"
+  }
+}
