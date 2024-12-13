@@ -1,270 +1,273 @@
+function checkI18nMessages() {
+  const requiredMessages = ['viewIcon', 'availableIcons', 'close', 'loading', 'download', 'newWindow', 'downloadFailedRetry', 'downloadFailed', 'noIconFound', 'loadError'];
+  return requiredMessages.every(msg => {
+    const message = chrome.i18n.getMessage(msg);
+    return message && message.length > 0;
+  });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-  // Load saved language preference
-  chrome.storage.local.get('preferred_language', function(data) {
-    if (data.preferred_language) {
-      document.getElementById('languageSelect').value = data.preferred_language;
+  function initializeUI() {
+    if (!checkI18nMessages()) {
+      console.error('Required i18n messages not available');
+      setTimeout(initializeUI, 100); // Retry after a short delay
+      return;
     }
-  });
 
-  // Handle language selection
-  document.getElementById('languageSelect').addEventListener('change', function(e) {
-    const lang = e.target.value;
-    chrome.storage.local.set({ 'preferred_language': lang }, function() {
-      chrome.runtime.reload();
+    initializeLanguageSelector();
+    initializeTabList();
+  }
+
+  function initializeLanguageSelector() {
+    chrome.storage.local.get('preferred_language', function(data) {
+      if (data.preferred_language) {
+        document.getElementById('languageSelect').value = data.preferred_language;
+      }
     });
-  });
 
-  // 获取所有打开的标签页
-  chrome.tabs.query({}, function(tabs) {
-    const tabList = document.getElementById('tabList');
+    document.getElementById('languageSelect').addEventListener('change', function(e) {
+      const lang = e.target.value;
+      chrome.storage.local.set({ 'preferred_language': lang }, function() {
+        chrome.runtime.reload();
+      });
+    });
+  }
 
-    tabs.forEach(tab => {
-      const tabItem = document.createElement('div');
-      tabItem.className = 'tab-item';
+  function initializeTabList() {
+    chrome.tabs.query({}, function(tabs) {
+      const tabList = document.getElementById('tabList');
+      tabList.innerHTML = '';
 
-      // 创建图标元素
-      const icon = document.createElement('img');
-      icon.className = 'tab-icon';
-      icon.src = tab.favIconUrl || 'images/default-icon.png';
+      tabs.forEach(tab => {
+        const tabItem = document.createElement('div');
+        tabItem.className = 'tab-item';
 
-      // 创建标题元素
-      const title = document.createElement('span');
-      title.className = 'tab-title';
-      title.textContent = tab.title;
+        const icon = document.createElement('img');
+        icon.className = 'tab-icon';
+        icon.src = tab.favIconUrl || 'images/default-icon.png';
 
-      // 创建查看图标按钮
-      const viewButton = document.createElement('button');
-      viewButton.className = 'view-icon-btn';
-      viewButton.textContent = chrome.i18n.getMessage('viewIcon');
-      viewButton.onclick = function() {
-        // 获取当前标签页的图标信息
-        chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          function: findHighResIcons,
-        }, (results) => {
-          if (results && results[0] && results[0].result) {
-            const icons = results[0].result;
-            if (icons.length > 0) {
-              const dialog = document.createElement('dialog');
-              dialog.className = 'icon-dialog';
+        const title = document.createElement('span');
+        title.className = 'tab-title';
+        title.textContent = tab.title;
 
-              const header = document.createElement('div');
-              header.className = 'dialog-header';
+        const viewButton = document.createElement('button');
+        viewButton.className = 'view-icon-btn';
+        viewButton.textContent = chrome.i18n.getMessage('viewIcon');
+        viewButton.onclick = function() {
+          chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            function: findHighResIcons,
+          }, (results) => {
+            if (results && results[0] && results[0].result) {
+              const icons = results[0].result;
+              if (icons.length > 0) {
+                const dialog = document.createElement('dialog');
+                dialog.className = 'icon-dialog';
 
-              const title = document.createElement('h3');
-              title.textContent = chrome.i18n.getMessage('availableIcons');
-              title.style.margin = '3px 0';
+                const header = document.createElement('div');
+                header.className = 'dialog-header';
 
-              const buttonGroup = document.createElement('div');
-              buttonGroup.className = 'button-group';
+                const title = document.createElement('h3');
+                title.textContent = chrome.i18n.getMessage('availableIcons');
+                title.style.margin = '3px 0';
 
-              const closeBtn = document.createElement('button');
-              closeBtn.textContent = chrome.i18n.getMessage('close');
-              closeBtn.className = 'close-btn';
-              closeBtn.onclick = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dialog.remove();
-              };
+                const buttonGroup = document.createElement('div');
+                buttonGroup.className = 'button-group';
 
-              buttonGroup.appendChild(closeBtn);
-
-              header.appendChild(title);
-              header.appendChild(buttonGroup);
-              dialog.appendChild(header);
-
-              const content = document.createElement('div');
-              content.className = 'dialog-content';
-
-              const loadingContainer = document.createElement('div');
-              loadingContainer.className = 'loading-container';
-              const spinner = document.createElement('div');
-              spinner.className = 'spinner';
-              const loadingText = document.createElement('p');
-              loadingText.textContent = chrome.i18n.getMessage('loading');
-              loadingContainer.appendChild(spinner);
-              loadingContainer.appendChild(loadingText);
-              content.appendChild(loadingContainer);
-
-              const iconsContainer = document.createElement('div');
-              iconsContainer.className = 'icons-container';
-              content.appendChild(iconsContainer);
-              dialog.appendChild(content);
-
-              document.body.appendChild(dialog);
-              dialog.showModal();
-
-              // 点击空白处关闭
-              dialog.addEventListener('click', (e) => {
-                if (e.target === dialog) {
+                const closeBtn = document.createElement('button');
+                closeBtn.textContent = chrome.i18n.getMessage('close');
+                closeBtn.className = 'close-btn';
+                closeBtn.onclick = (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   dialog.remove();
-                }
-              });
+                };
 
-              Promise.all(icons.map(icon =>
-                fetch(icon.url)
-                  .then(response => {
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    return response;
-                  })
-                  .then(() => {
-                    const container = document.createElement('div');
-                    container.className = 'icon-container';
-                    container.onclick = (e) => {
-                      e.stopPropagation();
-                    };
+                buttonGroup.appendChild(closeBtn);
 
-                    const img = document.createElement('img');
-                    img.src = icon.url;
-                    img.onclick = (e) => {
-                      e.stopPropagation();
-                      window.open(icon.url, '_blank');
-                    };
-                    img.onload = () => {
-                      img.classList.add('loaded');
-                    };
+                header.appendChild(title);
+                header.appendChild(buttonGroup);
+                dialog.appendChild(header);
 
-                    const infoText = [];
-                    if (icon.type) infoText.push(icon.type);
-                    if (icon.size) infoText.push(`${icon.size}x${icon.size}`);
+                const content = document.createElement('div');
+                content.className = 'dialog-content';
 
-                    const info = document.createElement('span');
-                    info.textContent = infoText.join(' - ');
+                const loadingContainer = document.createElement('div');
+                loadingContainer.className = 'loading-container';
+                const spinner = document.createElement('div');
+                spinner.className = 'spinner';
+                const loadingText = document.createElement('p');
+                loadingText.textContent = chrome.i18n.getMessage('loading');
+                loadingContainer.appendChild(spinner);
+                loadingContainer.appendChild(loadingText);
+                content.appendChild(loadingContainer);
 
-                    const buttonGroup = document.createElement('div');
-                    buttonGroup.className = 'button-group';
+                const iconsContainer = document.createElement('div');
+                iconsContainer.className = 'icons-container';
+                content.appendChild(iconsContainer);
+                dialog.appendChild(content);
 
-                    const downloadBtn = document.createElement('button');
-                    downloadBtn.textContent = chrome.i18n.getMessage('download');
-                    downloadBtn.className = 'download-btn';
-                    downloadBtn.onclick = (e) => {
-                      console.log('下载按钮被点击');
-                      e.preventDefault();
-                      e.stopPropagation();
-                      console.log('准备下载URL:', icon.url);
+                document.body.appendChild(dialog);
+                dialog.showModal();
 
-                      // 从 URL 中提取文件名
-                      const urlObj = new URL(icon.url);
-                      const urlFilename = urlObj.pathname.split('/').pop();
-
-                      // 确保文件名有正确的扩展名
-                      let filename = urlFilename;
-                      if (!filename.match(/\.(png|jpg|jpeg|ico|svg|gif)$/i)) {
-                        filename += '.png';
-                      }
-
-                      // 添加时间戳避免文件名冲突
-                      const timestamp = new Date().getTime();
-                      filename = `icon_${timestamp}_${filename}`;
-
-                      console.log('开始下载，文件名:', filename);
-
-                      // 发送消息给 background script 处理下载
-                      chrome.runtime.sendMessage({
-                        action: 'downloadIcon',
-                        url: icon.url,
-                        filename: filename
-                      }, (response) => {
-                        if (!response) {
-                          console.error('下载失败: 没有收到响应');
-                          alert(chrome.i18n.getMessage('downloadFailedRetry'));
-                          return;
-                        }
-
-                        if (chrome.runtime.lastError) {
-                          console.error('消息发送失败:', chrome.runtime.lastError);
-                          alert(chrome.i18n.getMessage('downloadFailedRetry'));
-                        } else if (!response.success) {
-                          console.error('下载失败:', response.error);
-                          alert(chrome.i18n.getMessage('downloadFailed') + ': ' + response.error);
-                        } else {
-                          console.log('下载成功，downloadId:', response.downloadId);
-                        }
-                      });
-
-                      // 防止事件冒泡
-                      return false;
-                    };
-
-                    const openBtn = document.createElement('button');
-                    openBtn.textContent = chrome.i18n.getMessage('newWindow');
-                    openBtn.className = 'open-btn';
-                    openBtn.onclick = (e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      chrome.tabs.create({ url: icon.url });
-                    };
-
-                    buttonGroup.appendChild(downloadBtn);
-                    buttonGroup.appendChild(openBtn);
-
-                    container.appendChild(img);
-                    container.appendChild(info);
-                    container.appendChild(buttonGroup);
-                    return container;
-                  })
-              )).then(containers => {
-                // 移除加载状态
-                loadingContainer.remove();
-
-                // 对容器进行排序
-                containers.sort((a, b) => {
-                  const getNumber = (container) => {
-                    const span = container.querySelector('span');
-                    if (!span) return -1;
-                    const match = span.textContent.match(/\d+/);
-                    return match ? parseInt(match[0]) : -1;
-                  };
-
-                  const numA = getNumber(a);
-                  const numB = getNumber(b);
-
-                  // 如果都没有数字，保持原顺序
-                  if (numA === -1 && numB === -1) return 0;
-                  // 如果只有一个有数字，有数字的排在前面
-                  if (numA === -1) return 1;
-                  if (numB === -1) return -1;
-                  // 如果都有数字，按数字从大到小排序
-                  return numB - numA;
+                dialog.addEventListener('click', (e) => {
+                  if (e.target === dialog) {
+                    dialog.remove();
+                  }
                 });
 
-                // 添加排序后的图标
-                containers.forEach(container => {
-                  iconsContainer.appendChild(container);
+                Promise.all(icons.map(icon =>
+                  fetch(icon.url)
+                    .then(response => {
+                      if (!response.ok) throw new Error('Network response was not ok');
+                      return response;
+                    })
+                    .then(() => {
+                      const container = document.createElement('div');
+                      container.className = 'icon-container';
+                      container.onclick = (e) => {
+                        e.stopPropagation();
+                      };
+
+                      const img = document.createElement('img');
+                      img.src = icon.url;
+                      img.onclick = (e) => {
+                        e.stopPropagation();
+                        window.open(icon.url, '_blank');
+                      };
+                      img.onload = () => {
+                        img.classList.add('loaded');
+                      };
+
+                      const infoText = [];
+                      if (icon.type) infoText.push(icon.type);
+                      if (icon.size) infoText.push(`${icon.size}x${icon.size}`);
+
+                      const info = document.createElement('span');
+                      info.textContent = infoText.join(' - ');
+
+                      const buttonGroup = document.createElement('div');
+                      buttonGroup.className = 'button-group';
+
+                      const downloadBtn = document.createElement('button');
+                      downloadBtn.textContent = chrome.i18n.getMessage('download');
+                      downloadBtn.className = 'download-btn';
+                      downloadBtn.onclick = (e) => {
+                        console.log('下载按钮被点击');
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('准备下载URL:', icon.url);
+
+                        const urlObj = new URL(icon.url);
+                        const urlFilename = urlObj.pathname.split('/').pop();
+
+                        let filename = urlFilename;
+                        if (!filename.match(/\.(png|jpg|jpeg|ico|svg|gif)$/i)) {
+                          filename += '.png';
+                        }
+
+                        const timestamp = new Date().getTime();
+                        filename = `icon_${timestamp}_${filename}`;
+
+                        console.log('开始下载，文件名:', filename);
+
+                        chrome.runtime.sendMessage({
+                          action: 'downloadIcon',
+                          url: icon.url,
+                          filename: filename
+                        }, (response) => {
+                          if (!response) {
+                            console.error('下载失败: 没有收到响应');
+                            alert(chrome.i18n.getMessage('downloadFailedRetry'));
+                            return;
+                          }
+
+                          if (chrome.runtime.lastError) {
+                            console.error('消息发送失败:', chrome.runtime.lastError);
+                            alert(chrome.i18n.getMessage('downloadFailedRetry'));
+                          } else if (!response.success) {
+                            console.error('下载失败:', response.error);
+                            alert(chrome.i18n.getMessage('downloadFailed') + ': ' + response.error);
+                          } else {
+                            console.log('下载成功，downloadId:', response.downloadId);
+                          }
+                        });
+
+                        return false;
+                      };
+
+                      const openBtn = document.createElement('button');
+                      openBtn.textContent = chrome.i18n.getMessage('newWindow');
+                      openBtn.className = 'open-btn';
+                      openBtn.onclick = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        chrome.tabs.create({ url: icon.url });
+                      };
+
+                      buttonGroup.appendChild(downloadBtn);
+                      buttonGroup.appendChild(openBtn);
+
+                      container.appendChild(img);
+                      container.appendChild(info);
+                      container.appendChild(buttonGroup);
+                      return container;
+                    })
+                )).then(containers => {
+                  loadingContainer.remove();
+
+                  containers.sort((a, b) => {
+                    const getNumber = (container) => {
+                      const span = container.querySelector('span');
+                      if (!span) return -1;
+                      const match = span.textContent.match(/\d+/);
+                      return match ? parseInt(match[0]) : -1;
+                    };
+
+                    const numA = getNumber(a);
+                    const numB = getNumber(b);
+
+                    if (numA === -1 && numB === -1) return 0;
+                    if (numA === -1) return 1;
+                    if (numB === -1) return -1;
+                    return numB - numA;
+                  });
+
+                  containers.forEach(container => {
+                    iconsContainer.appendChild(container);
+                  });
+                })
+                .catch(error => {
+                  loadingContainer.remove();
+                  const errorMsg = document.createElement('div');
+                  errorMsg.textContent = chrome.i18n.getMessage('loadError');
+                  errorMsg.style.textAlign = 'center';
+                  errorMsg.style.color = '#666';
+                  errorMsg.style.padding = '20px';
+                  iconsContainer.appendChild(errorMsg);
                 });
-              })
-              .catch(error => {
-                // 处理错误情况
-                loadingContainer.remove();
-                const errorMsg = document.createElement('div');
-                errorMsg.textContent = chrome.i18n.getMessage('loadError');
-                errorMsg.style.textAlign = 'center';
-                errorMsg.style.color = '#666';
-                errorMsg.style.padding = '20px';
-                iconsContainer.appendChild(errorMsg);
-              });
-            } else {
-              // 如果没有找到其他图标，就打开当前图标
-              const iconUrl = tab.favIconUrl;
-              if (iconUrl) {
-                window.open(iconUrl, '_blank');
               } else {
-                alert(chrome.i18n.getMessage('noIconFound'));
+                const iconUrl = tab.favIconUrl;
+                if (iconUrl) {
+                  window.open(iconUrl, '_blank');
+                } else {
+                  alert(chrome.i18n.getMessage('noIconFound'));
+                }
               }
             }
-          }
-        });
-      }
+          });
+        }
 
-      // 将元素添加到tab项中
-      tabItem.appendChild(icon);
-      tabItem.appendChild(title);
-      tabItem.appendChild(viewButton);
+        tabItem.appendChild(icon);
+        tabItem.appendChild(title);
+        tabItem.appendChild(viewButton);
 
-      // 将tab项添加到列表中
-      tabList.appendChild(tabItem);
+        tabList.appendChild(tabItem);
+      });
     });
-  });
+  }
+
+  initializeUI();
 });
 
 // 在页面中查找高清图标的函数
